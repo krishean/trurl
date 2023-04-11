@@ -29,7 +29,7 @@ Once the vcpkg repository is set up you do not need to run these commands again.
 
 Once the vcpkg repository and dependencies are set up, go to the winbuild directory in the trurl sources:
 
-    `cd trurl\winbuild`
+    cd trurl\winbuild
 
 Then you can call the build command with the desired parameters. The builds will be placed in an output directory as described below.
 
