@@ -7,11 +7,15 @@ set "window_title=%window_title:_= %"
 title %window_title%
 call :detect_perl
 if %errorlevel% NEQ 0 exit /b 1
+rem make sure some version of visual studio is installed
+call detect_vs.bat
+if %errorlevel% NEQ 0 exit /b 1
 for %%a in (x64-debug x64-release x86-debug x86-release) do (
     if exist "%basedir%out\build\%%a" (
         cd "%basedir%out\build\%%a"
         echo.Testing %%a...
-        perl "%basedir%..\test.pl"
+        rem perl "%basedir%..\test.pl"
+        ctest -V
     ) else (
         echo.Notice: The %%a directory does not exist.
     )
