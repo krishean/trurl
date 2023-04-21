@@ -7,9 +7,10 @@ for preset in "${presets[@]}";do
         cd "${basedir}/out/build/${preset}"
         echo "Testing ${preset}..."
         #perl "${basedir}/../test.pl"
+        #python3 "${basedir}/../test.py"
         ctest -V
     else
-        echo "Notice: The ${preset} directory does not exist."
+        echo " note: The ${preset} directory does not exist."
     fi
 done
 echo "Done."
