@@ -23,8 +23,8 @@ rem     set "VCPKG_ROOT=%GITHUB_WORKSPACE%vcpkg"
 rem     call .\vcpkg\bootstrap-vcpkg.bat
     rem .\vcpkg\vcpkg x-update-baseline
 rem )
-rem set "presets=x64-debug x64-release x86-debug x86-release"
-set "presets=x64-release"
+set "presets=x64-debug x64-release x86-debug x86-release"
+rem set "presets=x64-release"
 for %%a in (%presets%) do (
     call :build_project "%%a"
 )
@@ -46,15 +46,17 @@ set "preset=%~1"
 for /f "tokens=1,2 delims=-" %%a in ("%preset%") do (
     rem set "build_arch=%%a"
     set "Platform=%%a"
-    rem if "%%a"=="x86" (
-    rem     set "build_arch=Win32"
-    rem ) else (
-    rem     set "build_arch=%%a"
-    rem )
+    if "%%a"=="x86" (
+        set "build_arch=Win32"
+    ) else (
+        set "build_arch=%%a"
+    )
     if "%%b"=="debug" (
         set "build_type=Debug"
+        set "curl_lib=libcurl_a_debug.lib"
     ) else (
         set "build_type=Release"
+        set "curl_lib=libcurl_a.lib"
     )
 )
 rem set up build environment with the correct platform for ninja
@@ -97,26 +99,27 @@ if not exist "%GITHUB_WORKSPACE%out\build\%preset%\CMakeCache.txt" (
     rem cmake --preset=%preset% "%GITHUB_WORKSPACE%"
     
     rem manually configure, generate with Ninja and compile with msvc, specifying libcurl location
-    cmake -G "Ninja" ^
-        -DCMAKE_C_COMPILER:STRING="cl.exe" ^
-        -DCMAKE_CXX_COMPILER:STRING="cl.exe" ^
-        -DCMAKE_BUILD_TYPE:STRING="%build_type%" ^
-        -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%" ^
-        -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%curl\include" ^
-        -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%curl\lib\libcurl_a.lib" ^
-        "%GITHUB_WORKSPACE%"
+    rem cmake -G "Ninja" ^
+    rem     -DCMAKE_C_COMPILER:STRING="cl.exe" ^
+    rem     -DCMAKE_CXX_COMPILER:STRING="cl.exe" ^
+    rem     -DCMAKE_BUILD_TYPE:STRING="%build_type%" ^
+    rem     -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%" ^
+    rem     -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\include" ^
+    rem     -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\lib\%curl_lib%" ^
+    rem     "%GITHUB_WORKSPACE%"
     
     rem manually configure, generate with visual studio 2022 and compile with msvc, specifying libcurl location
-    rem cmake -G "Visual Studio 17 2022" -A %Platform% ^
-    rem     -DCMAKE_BINARY_DIR:PATH="%GITHUB_WORKSPACE%\out\build\%preset%" ^
-    rem     -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%" ^
-    rem     -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%curl\include" ^
-    rem     -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%curl\lib\libcurl_a.lib" ^
-    rem     "%GITHUB_WORKSPACE%"
+    cmake -G "Visual Studio 17 2022" -A %build_arch% ^
+        -DCMAKE_BINARY_DIR:PATH="%GITHUB_WORKSPACE%\out\build\%preset%" ^
+        -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%" ^
+        -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\include" ^
+        -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\lib\%curl_lib%" ^
+        "%GITHUB_WORKSPACE%"
     rem note: when visual studio is used as the generator, ctest -V does not work
     rem cd to the output directory and run: python3 .\..\..\..\..\test.py to test
 )
 rem cmake --build "%GITHUB_WORKSPACE%out\build\%preset%" --clean-first --config %build_type%
 cmake --build . --clean-first --config %build_type%
-rem cmake --build . --target install
+rem note: when visual studio is used as the generator, you need to specify build_type for the install target
+cmake --build . --target install --config %build_type%
 goto:eof
