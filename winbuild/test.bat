@@ -16,8 +16,8 @@ for %%a in (x64-debug x64-release x86-debug x86-release) do (
         cd "%basedir%out\build\%%a"
         echo.Testing %%a...
         rem perl "%basedir%..\test.pl"
-        rem python3 "%basedir%..\test.py"
-        ctest -V
+        python3 "%basedir%..\test.py"
+        rem ctest -V
     ) else (
         echo. note: The %%a directory does not exist.
     )
