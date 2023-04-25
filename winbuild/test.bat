@@ -12,8 +12,8 @@ rem make sure some version of visual studio is installed
 call detect_vs.bat
 if %errorlevel% NEQ 0 exit /b 1
 for %%a in (x64-debug x64-release x86-debug x86-release) do (
-    if exist "%basedir%out\build\%%a" (
-        cd "%basedir%out\build\%%a"
+    if exist "%basedir%out\install\%%a\bin" (
+        cd "%basedir%out\install\%%a\bin"
         echo.Testing %%a...
         rem perl "%basedir%..\test.pl"
         python3 "%basedir%..\test.py"

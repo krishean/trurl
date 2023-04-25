@@ -53,13 +53,17 @@ for /f "tokens=1,2 delims=-" %%a in ("%preset%") do (
     )
     if "%%b"=="debug" (
         set "build_type=Debug"
-        set "curl_lib=libcurl_a_debug.lib"
+        set "DEBUG=ON"
+        rem set "curl_lib=libcurl_a_debug.lib"
+        set "curl_lib=libcurl-d.lib"
     ) else (
         set "build_type=Release"
-        set "curl_lib=libcurl_a.lib"
+        set "DEBUG=OFF"
+        rem set "curl_lib=libcurl_a.lib"
+        set "curl_lib=libcurl.lib"
     )
 )
-rem set up build environment with the correct platform for ninja
+rem set up build environment with the correct platform
 call "%GITHUB_WORKSPACE%detect_vs.bat"
 rem echo.build_arch=%build_arch%
 rem echo.build_type=%build_type%
@@ -70,9 +74,9 @@ rem     set "build_type=Debug"
 rem ) else (
 rem     set "build_type=Release"
 rem )
-rem if exist "%GITHUB_WORKSPACE%out\build\%preset%" (
-rem     rmdir /s /q "%GITHUB_WORKSPACE%out\build\%preset%"
-rem )
+if exist "%GITHUB_WORKSPACE%out\build\%preset%" (
+    rmdir /s /q "%GITHUB_WORKSPACE%out\build\%preset%"
+)
 if not exist "%GITHUB_WORKSPACE%out\build\%preset%" (
     mkdir "%GITHUB_WORKSPACE%out\build\%preset%"
 )
@@ -111,9 +115,9 @@ if not exist "%GITHUB_WORKSPACE%out\build\%preset%\CMakeCache.txt" (
     rem manually configure, generate with visual studio 2022 and compile with msvc, specifying libcurl location
     cmake -G "Visual Studio 17 2022" -A %build_arch% ^
         -DCMAKE_BINARY_DIR:PATH="%GITHUB_WORKSPACE%\out\build\%preset%" ^
-        -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%" ^
-        -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\include" ^
-        -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%out\curl\%preset%\lib\%curl_lib%" ^
+        -DCMAKE_INSTALL_PREFIX:PATH="%GITHUB_WORKSPACE%out\install\%preset%\bin" ^
+        -DCURL_INCLUDE_DIR:PATH="%GITHUB_WORKSPACE%out\install\%preset%\include" ^
+        -DCURL_LIBRARY:PATH="%GITHUB_WORKSPACE%out\install\%preset%\lib\%curl_lib%" ^
         "%GITHUB_WORKSPACE%"
     rem note: when visual studio is used as the generator, ctest -V does not work
     rem cd to the output directory and run: python3 .\..\..\..\..\test.py to test
