@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-basedir=$(dirname "$(realpath "$0")")
-cd "${basedir}"
+GITHUB_WORKSPACE=$(dirname "$(realpath "$0")")
+cd "$GITHUB_WORKSPACE"
 presets=("x64-debug" "x64-release" "x86-debug" "x86-release")
 for preset in "${presets[@]}";do
-    if [ -d "${basedir}/out/build/${preset}" ];then
-        cd "${basedir}/out/build/${preset}"
+    if [ -d "$GITHUB_WORKSPACE/out/install/${preset}/bin" ];then
+        cd "$GITHUB_WORKSPACE/out/install/${preset}/bin"
         echo "Testing ${preset}..."
-        #perl "${basedir}/../test.pl"
-        #python3 "${basedir}/../test.py"
-        ctest -V
+        #perl "$GITHUB_WORKSPACE/../test.pl"
+        python3 "$GITHUB_WORKSPACE/../test.py"
+        #ctest -V
     else
         echo " note: The ${preset} directory does not exist."
     fi

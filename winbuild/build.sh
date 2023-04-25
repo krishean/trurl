@@ -32,13 +32,22 @@ build_project(){
     build_arch="${arr[0]}"
     if [ "${arr[1]}" == "debug" ];then
         build_type="Debug"
+        #DEBUG="yes"
+        DEBUG="ON"
+        curl_lib="libcurl-d.a"
     else
         build_type="Release"
+        #DEBUG="no"
+        DEBUG="OFF"
+        curl_lib="libcurl.a"
     fi
     #echo "${preset}"
     #echo "${build_arch}"
     #echo "${build_type}"
     
+    if [ -d "$GITHUB_WORKSPACE/out/build/${preset}" ];then
+        rm -rf "$GITHUB_WORKSPACE/out/build/${preset}"
+    fi
     if [ ! -d "$GITHUB_WORKSPACE/out/build/${preset}" ];then
         mkdir -pv "$GITHUB_WORKSPACE/out/build/${preset}"
     fi
@@ -63,17 +72,24 @@ build_project(){
         #    -DVCPKG_TARGET_TRIPLET:STRING="${build_arch}-$(uname -s|tr '[A-Z]' '[a-z]')" \
         #    "$GITHUB_WORKSPACE"
         cmake \
-            -DCMAKE_BUILD_TYPE:STRING="${build_type}" \
-            -DCMAKE_INSTALL_PREFIX:PATH="$GITHUB_WORKSPACE/out/install/${preset}" \
-            -DCURL_INCLUDE_DIR:PATH="$GITHUB_WORKSPACE/out/curl/$preset/include" \
-            -DCURL_LIBRARY:PATH="$GITHUB_WORKSPACE/out/curl/$preset/lib/libcurl.a" \
+            -DCMAKE_BUILD_TYPE:STRING="$build_type" \
+            -DCMAKE_BINARY_DIR:PATH="$GITHUB_WORKSPACE/out/build/$preset" \
+            -DCMAKE_INSTALL_PREFIX:PATH="$GITHUB_WORKSPACE/out/install/${preset}/bin" \
+            -DCURL_INCLUDE_DIR:PATH="$GITHUB_WORKSPACE/out/install/$preset/include" \
+            -DCURL_LIBRARY:PATH="$GITHUB_WORKSPACE/out/install/$preset/lib/$curl_lib" \
             "$GITHUB_WORKSPACE"
         #cmake --preset=${preset} "$GITHUB_WORKSPACE"
     fi
     #cmake --build "$GITHUB_WORKSPACE/out/build/${preset}" --clean-first --config ${build_type}
-    cmake --build . --clean-first --config ${build_type}
-    cmake --build . --target install
-    strip "$GITHUB_WORKSPACE"/out/install/*-release/trurl
+    cmake --build . --clean-first --config $build_type
+    # note: when visual studio is used as the generator, you need to specify build_type for the install target
+    cmake --build . --target install --config $build_type
+    if [ "${build_type}" == "Release" ];then
+        strip "$GITHUB_WORKSPACE/out/install/$preset/bin/trurl"
+    fi
+    "$GITHUB_WORKSPACE/out/install/$preset/bin/trurl" --version
+    
+    echo ""
 }
 
 for preset in "${presets[@]}";do
