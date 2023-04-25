@@ -42,6 +42,8 @@ endif()
 
 # message(MSVC="${MSVC}")
 
+# override msvc's tendency to hide the output executable in yet another subdirectory
+# only villains hide the output executable
 if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<0:>)
     set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/$<0:>)
@@ -114,6 +116,8 @@ else()
             #include_directories(${ZLIB_INCLUDE_DIRS})
         endif()
         
+        # libldap2-dev is required if libcurl is build with the default options
+        # but shouldn't be needed if ldap is disabled in libcurl
         #find_package(Ldap REQUIRED)
         list(APPEND CURL_LIBS "ldap" "lber")
     endif()
@@ -129,9 +133,19 @@ if(MSVC)
     install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
 endif()
 
-# run tests in the output directory with ctest -V
-enable_testing()
+# todo: install README.md/COPYING/manpage/other text files?
+
 #find_package(Perl REQUIRED)
 #add_test(NAME test.pl COMMAND ${PERL_EXECUTABLE} "${PROJECT_SOURCE_DIR}/../test.pl")
-find_package(Python3 REQUIRED)
-add_test(NAME test.py COMMAND ${Python3_EXECUTABLE} -u "${PROJECT_SOURCE_DIR}/../test.py")
+#find_package(Python3)
+find_package(Python 3.8 COMPONENTS Interpreter)
+#message(Python_VERSION="${Python_VERSION}")
+#message(Python_EXECUTABLE="${Python_EXECUTABLE}")
+# if python3 was found and the version is high enough, enable tests
+if((Python_FOUND) AND (Python_VERSION VERSION_GREATER_EQUAL 3.8))
+    # run tests in the output directory with ctest -V
+    enable_testing()
+    add_test(NAME test.py COMMAND ${Python_EXECUTABLE} -u "${PROJECT_SOURCE_DIR}/../test.py")
+else()
+    message(STATUS " note: Python 3.8 or higher was not found and is needed for running tests, ctest will not be available")
+endif()
