@@ -120,6 +120,9 @@ else()
         # but shouldn't be needed if ldap is disabled in libcurl
         #find_package(Ldap REQUIRED)
         list(APPEND CURL_LIBS "ldap" "lber")
+        
+        # libidn2-dev is required for IDN support
+        list(APPEND CURL_LIBS "idn2")
     endif()
     
     #target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
