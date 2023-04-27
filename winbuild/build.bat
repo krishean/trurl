@@ -24,27 +24,9 @@ set "window_title=%~n0"
 set "window_title=%window_title:_= %"
 title %window_title%
 
+rem 2nd argument is the build arch, can be arm64, x64, or x86
 if not "%~2"=="" (
     set "Platform=%~2"
-)
-
-if not "%~3"=="" (
-    if /I "%~3"=="debug" (
-        set "build_type=Debug"
-        set "DEBUG=ON"
-        rem set "curl_lib=libcurl_a_debug.lib"
-        set "curl_lib=libcurl-d.lib"
-    ) else (
-        set "build_type=Release"
-        set "DEBUG=OFF"
-        rem set "curl_lib=libcurl_a.lib"
-        set "curl_lib=libcurl.lib"
-    )
-) else (
-    set "build_type=Release"
-    set "DEBUG=OFF"
-    rem set "curl_lib=libcurl_a.lib"
-    set "curl_lib=libcurl.lib"
 )
 
 rem GITHUB_ACTIONS - Always set to true when GitHub Actions is running the
@@ -62,18 +44,24 @@ if /I not "%GITHUB_ACTIONS%"=="true" (
         call :detect_python3
         if %errorlevel% NEQ 0 exit /b 1
     )
+    set "BUILD_CURL_EXE=ON"
+) else (
+    rem skip building the curl binary under CI to save time, if not
+    rem building under CI you get a free copy of curl for your trouble
+    set "BUILD_CURL_EXE=OFF"
 )
 rem set "VCPKG_DISABLE_METRICS=1"
 rem note: VCPKG_ROOT needs to be defined
 rem if not defined VCPKG_ROOT (
-rem     if not exist "%GITHUB_WORKSPACE%\winbuild\vcpkg" (
+rem     cd "%GITHUB_WORKSPACE%\winbuild"
+rem     if not exist "vcpkg" (
 rem         git clone https://github.com/microsoft/vcpkg.git
 rem     ) else (
 rem         git -C vcpkg pull
 rem     )
 rem     set "VCPKG_ROOT=%GITHUB_WORKSPACE%\winbuild\vcpkg"
 rem     call .\vcpkg\bootstrap-vcpkg.bat
-    rem .\vcpkg\vcpkg x-update-baseline
+rem     .\vcpkg\vcpkg x-update-baseline
 rem )
 
 if "%Platform%"=="x86" (
@@ -87,10 +75,27 @@ rem set "presets=arm64-debug arm64-release x64-debug x64-release x86-debug x86-r
 rem set "presets=x64-debug x64-release x86-debug x86-release"
 rem set "presets=x64-release"
 
-if /I "%build_type%"=="debug" (
-    set "preset=%Platform%-debug"
+rem 3rd argument is build type, either debug or release
+if not "%~3"=="" (
+    if /I "%~3"=="debug" (
+        set "DEBUG=ON"
+    ) else (
+        set "DEBUG=OFF"
+    )
 ) else (
+    set "DEBUG=OFF"
+)
+
+if "%DEBUG%"=="ON" (
+    set "build_type=Debug"
+    set "preset=%Platform%-debug"
+    rem set "curl_lib=libcurl_a_debug.lib"
+    set "curl_lib=libcurl-d.lib"
+) else (
+    set "build_type=Release"
     set "preset=%Platform%-release"
+    rem set "curl_lib=libcurl_a.lib"
+    set "curl_lib=libcurl.lib"
 )
 
 rem access with ex:
@@ -102,6 +107,8 @@ rem variables that go in the env section
 rem set "CURL_VER=8.0.1"
 rem set "CURL_URL=https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.1.zip"
 
+rem 4th argument is the version of libcurl to build with in the format x.y.z
+rem default to the latest version as of writing the batch file
 if not "%~4"=="" (
     set "CURL_VER=%~4"
 ) else (
@@ -120,6 +127,7 @@ rem ${env:CURL_URL}
 set "build_dir=%GITHUB_WORKSPACE%\winbuild\out\build\%preset%"
 set "install_dir=%GITHUB_WORKSPACE%\winbuild\out\install\%preset%"
 
+rem 1st argument is the build action
 rem check %~1 for if curl, trurl, test, or clean were specified
 if /I "%~1"=="curl" (
     call :build_curl
@@ -170,7 +178,10 @@ rem )
 
 title Done
 echo.Done.
-pause
+if /I not "%GITHUB_ACTIONS%"=="true" (
+    rem don't pause if running under CI
+    pause
+)
 @exit
 
 :detect_git
@@ -200,15 +211,6 @@ if %errorlevel% NEQ 0 (
     echo.Please install Python from the Microsoft Store: https://www.microsoft.com/store/productId/9NRWMJP3717K
     pause
     exit /b 1
-)
-goto:eof
-
-:check_curl
-if not exist "%install_dir%\include\curl" (
-    call :build_curl
-)
-if not exist "%install_dir%\lib\%curl_lib%" (
-    call :build_curl
 )
 goto:eof
 
@@ -271,18 +273,22 @@ cd "%build_dir%"
 
 rem build curl as a static library
 if not exist "%build_dir%\CMakeCache.txt" (
-    rem -DCURL_STATIC_CRT=ON
-    rem note: these build options are roughly equivalent to the microsoft build of curl
-    rem trurl does not need the various options enabled as it is only using the parsing engine
-    rem building with the options enabled does not hurt anything, but results in a larger executable
+    rem note: these build options are roughly equivalent to the
+    rem microsoft build of curl. trurl does not need the
+    rem various options enabled as it is only using the parsing
+    rem engine, building with the options enabled does not hurt
+    rem anything, but results in a larger executable
+    rem note: using static crt makes the resulting executable
+    rem slightly larger, but makes it so we don't depend on
+    rem vcruntime140.dll needing to be installed
     cmake -G "Visual Studio 17 2022" -A %build_arch% ^
         -DCMAKE_BINARY_DIR:PATH="%build_dir%" ^
         -DCMAKE_INSTALL_PREFIX:PATH="%install_dir%" ^
+        -DBUILD_CURL_EXE=%BUILD_CURL_EXE% ^
         -DBUILD_SHARED_LIBS=OFF ^
-        -DENABLE_DEBUG=%DEBUG% ^
-        -DCURL_USE_SCHANNEL=ON ^
-        -DUSE_WIN32_IDN=ON ^
+        -DCURL_STATIC_CRT=ON ^
         -DENABLE_UNICODE=ON ^
+        -DENABLE_DEBUG=%DEBUG% ^
         -DCURL_DISABLE_ALTSVC=ON ^
         -DCURL_DISABLE_GOPHER=ON ^
         -DCURL_DISABLE_LDAP=ON ^
@@ -290,6 +296,8 @@ if not exist "%build_dir%\CMakeCache.txt" (
         -DCURL_DISABLE_MQTT=ON ^
         -DCURL_DISABLE_RTSP=ON ^
         -DCURL_DISABLE_SMB=ON ^
+        -DCURL_USE_SCHANNEL=ON ^
+        -DUSE_WIN32_IDN=ON ^
         "%GITHUB_WORKSPACE%\winbuild\out\%CURL_DIR%"
 )
 cmake --build . --clean-first --config %build_type%
@@ -305,31 +313,18 @@ if "%build_type%"=="Debug" (
         copy /y /b "%build_dir%\src\%build_type%\curl.pdb" "%install_dir%\bin"
     )
 )
-"%install_dir%\bin\curl.exe" --version
+if /I not "%GITHUB_ACTIONS%"=="true" (
+    "%install_dir%\bin\curl.exe" --version
+)
 echo.
 goto:eof
 
-:check_trurl
-if not exist "%build_dir%\trurl.exe" (
-    call :verify_trurl
+:check_curl
+if not exist "%install_dir%\include\curl" (
+    call :build_curl
 )
-goto:eof
-
-:verify_trurl
-rem check for required files in the expected places
-if exist "%GITHUB_WORKSPACE%\trurl.c" (
-    if exist "%GITHUB_WORKSPACE%\version.h" (
-        if exist "%GITHUB_WORKSPACE%\winbuild\CMakeLists.txt" (
-            rem we're ready to start building things here
-            call :build_trurl
-        ) else (
-            echo. error: Required file "winbuild\CMakeLists.txt" not found.
-        )
-    ) else (
-        echo. error: Required file "version.h" not found.
-    )
-) else (
-    echo. error: Required file "trurl.c" not found.
+if not exist "%install_dir%\lib\%curl_lib%" (
+    call :build_curl
 )
 goto:eof
 
@@ -414,6 +409,8 @@ if not exist "%build_dir%\CMakeCache.txt" (
         -DCMAKE_INSTALL_PREFIX:PATH="%install_dir%\bin" ^
         -DCURL_INCLUDE_DIR:PATH="%install_dir%\include" ^
         -DCURL_LIBRARY:PATH="%install_dir%\lib\%curl_lib%" ^
+        -DTRURL_STATIC_CRT=ON ^
+        -DENABLE_UNICODE=ON ^
         "%GITHUB_WORKSPACE%\winbuild"
     rem note: when visual studio is used as the generator, ctest -V does not work
     rem cd to the output directory and run: python3 .\..\..\..\..\test.py to test
@@ -424,6 +421,30 @@ rem note: when visual studio is used as the generator, you need to specify build
 cmake --build . --target install --config %build_type%
 "%install_dir%\bin\trurl.exe" --version
 echo.
+goto:eof
+
+:verify_trurl
+rem check for required files in the expected places
+if exist "%GITHUB_WORKSPACE%\trurl.c" (
+    if exist "%GITHUB_WORKSPACE%\version.h" (
+        if exist "%GITHUB_WORKSPACE%\winbuild\CMakeLists.txt" (
+            rem we're ready to start building things here
+            call :build_trurl
+        ) else (
+            echo. error: Required file "winbuild\CMakeLists.txt" not found.
+        )
+    ) else (
+        echo. error: Required file "version.h" not found.
+    )
+) else (
+    echo. error: Required file "trurl.c" not found.
+)
+goto:eof
+
+:check_trurl
+if not exist "%build_dir%\trurl.exe" (
+    call :verify_trurl
+)
 goto:eof
 
 :test_trurl
