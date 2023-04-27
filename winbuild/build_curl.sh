@@ -6,6 +6,7 @@ if [[ $(basename "$PWD") == winbuild ]];then cd ..;fi
 if [ "$GITHUB_WORKSPACE" != "$PWD" ];then GITHUB_WORKSPACE="$PWD";fi
 #echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
 
+cd "$GITHUB_WORKSPACE/winbuild"
 ./build.sh curl
 
 exit
