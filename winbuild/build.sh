@@ -36,6 +36,14 @@ else
     esac
 fi
 
+if [[ $GITHUB_ACTIONS != true ]];then
+    BUILD_CURL_EXE="ON"
+else
+    # skip building the curl binary under CI to save time, if not
+    # building under CI you get a free copy of curl for your trouble
+    BUILD_CURL_EXE="OFF"
+fi
+
 if [ -n "$3" ];then
     if [[ $3 == debug ]];then
         #DEBUG="yes"
@@ -50,12 +58,12 @@ else
 fi
 
 if [ "$DEBUG" == "ON" ];then
-    preset="$build_arch-debug"
     build_type="Debug"
+    preset="$build_arch-debug"
     curl_lib="libcurl-d.a"
 else
-    preset="$build_arch-release"
     build_type="Release"
+    preset="$build_arch-release"
     curl_lib="libcurl.a"
 fi
 #echo "build_arch=$build_arch"
@@ -188,18 +196,22 @@ build_curl(){
     # build curl as a static library
     if [ ! -f "$build_dir/CMakeCache.txt" ];then
         # -DCURL_STATIC_CRT=ON
-        # note: these build options are roughly equivalent to the microsoft build of curl
-        # trurl does not need the various options enabled as it is only using the parsing engine
-        # building with the options enabled does not hurt anything, but results in a larger executable
+        # note: these build options are roughly equivalent to the
+        # microsoft build of curl. trurl does not need the
+        # various options enabled as it is only using the parsing
+        # engine, building with the options enabled does not hurt
+        # anything, but results in a larger executable
+        # note: some of these options only affect windows builds
+        # but are included here for consistency
+        # note: apparently -DCURL_STATIC_CRT=ON will break linux builds?
         cmake \
             -DCMAKE_BUILD_TYPE:STRING="$build_type" \
             -DCMAKE_BINARY_DIR:PATH="$build_dir" \
             -DCMAKE_INSTALL_PREFIX:PATH="$install_dir" \
+            -DBUILD_CURL_EXE=$BUILD_CURL_EXE \
             -DBUILD_SHARED_LIBS=OFF \
-            -DENABLE_DEBUG=$DEBUG \
-            -DCURL_USE_OPENSSL=ON \
-            -DUSE_LIBIDN2=ON \
             -DENABLE_UNICODE=ON \
+            -DENABLE_DEBUG=$DEBUG \
             -DCURL_DISABLE_ALTSVC=ON \
             -DCURL_DISABLE_GOPHER=ON \
             -DCURL_DISABLE_LDAP=ON \
@@ -207,12 +219,16 @@ build_curl(){
             -DCURL_DISABLE_MQTT=ON \
             -DCURL_DISABLE_RTSP=ON \
             -DCURL_DISABLE_SMB=ON \
+            -DCURL_USE_OPENSSL=ON \
+            -DUSE_LIBIDN2=ON \
             "$GITHUB_WORKSPACE/winbuild/out/$CURL_DIR"
     fi
     cmake --build . --clean-first --config $build_type
     # note: when visual studio is used as the generator, you need to specify build_type for the install target
     cmake --build . --target install --config $build_type
-    "$install_dir/bin/curl" --version
+    if [[ $GITHUB_ACTIONS != true ]];then
+        "$install_dir/bin/curl" --version
+    fi
     echo ""
 }
 
@@ -268,8 +284,7 @@ build_trurl(){
         #    -DCMAKE_TOOLCHAIN_FILE:PATH="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
         #    -DVCPKG_TARGET_TRIPLET:STRING="$build_arch-$(uname -s|tr '[A-Z]' '[a-z]')" \
         #    "$GITHUB_WORKSPACE/winbuild"
-        cmake \
-            -DCMAKE_BUILD_TYPE:STRING="$build_type" \
+        cmake -DCMAKE_BUILD_TYPE:STRING="$build_type" \
             -DCMAKE_BINARY_DIR:PATH="$build_dir" \
             -DCMAKE_INSTALL_PREFIX:PATH="$install_dir/bin" \
             -DCURL_INCLUDE_DIR:PATH="$install_dir/include" \
