@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: ["master"]
+    branches: [ "msvc-cmake" ]
   pull_request:
-    branches: ["master"]
+    branches: [ "msvc-cmake" ]
 
 jobs:
   ubuntu:
