@@ -7,6 +7,36 @@ on:
     branches: [ "msvc-cmake" ]
 
 jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libc6-dev zlib1g-dev libssl-dev libidn2-dev libldap-dev
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+
+      - name: Build libcurl
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl
+        shell: bash
+
+      - name: Build trurl
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" trurl
+        shell: bash
+
+      - name: Test trurl
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" test
+        shell: bash
+
   build-windows:
     runs-on: windows-latest
     strategy:
@@ -31,14 +61,14 @@ jobs:
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
-      - name: build libcurl
+      - name: Build libcurl
         run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl
         shell: cmd
 
-      - name: build
+      - name: Build trurl
         run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" trurl
         shell: cmd
 
-      - name: test
+      - name: Test trurl
         run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" test
         shell: cmd
