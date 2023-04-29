@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install libc6-dev zlib1g-dev libssl-dev libidn2-dev libldap-dev
           python3 -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          if [ -f requirements.txt ];then pip3 install -r requirements.txt;fi
 
       - name: Build libcurl
         run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl "" ${{matrix.BUILD_TYPE}} ${{matrix.CURL_VER}}
@@ -64,7 +64,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          if exist "requirements.txt" pip3 install -r requirements.txt
 
       - name: Build libcurl
         run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl "" ${{matrix.BUILD_TYPE}} ${{matrix.CURL_VER}}
