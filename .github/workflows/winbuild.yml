@@ -31,15 +31,15 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Build libcurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl "" ${{matrix.BUILD_TYPE}} $CURL_VER
         shell: bash
 
       - name: Build trurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" trurl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" trurl "" ${{matrix.BUILD_TYPE}} $CURL_VER
         shell: bash
 
       - name: Test trurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" test "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" test "" ${{matrix.BUILD_TYPE}} $CURL_VER
         shell: bash
 
   build-windows:
@@ -70,13 +70,13 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Build libcurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl "" ${{matrix.BUILD_TYPE}} %CURL_VER%
         shell: cmd
 
       - name: Build trurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" trurl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" trurl "" ${{matrix.BUILD_TYPE}} %CURL_VER%
         shell: cmd
 
       - name: Test trurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" test "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" test "" ${{matrix.BUILD_TYPE}} %CURL_VER%
         shell: cmd
