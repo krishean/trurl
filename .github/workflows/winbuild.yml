@@ -64,9 +64,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          if exist "requirements.txt" (
-            pip3 install -r requirements.txt
-          )
+          if(Test-Path "requirements.txt"){pip3 install -r requirements.txt}
 
       - name: Build libcurl
         run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl "" ${{matrix.BUILD_TYPE}} ${{matrix.CURL_VER}}
