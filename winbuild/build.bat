@@ -39,11 +39,11 @@ if /I not "%GITHUB_ACTIONS%"=="true" (
     rem this should be handled by "ilammy/msvc-dev-cmd@v1" in github actions
     call "%GITHUB_WORKSPACE%\winbuild\detect_vs.bat"
     if %errorlevel% NEQ 0 exit /b 1
-    if /I "%~1"=="test" (
+    rem if /I "%~1"=="test" (
         rem call :detect_perl
         call :detect_python3
         if %errorlevel% NEQ 0 exit /b 1
-    )
+    rem )
     set "BUILD_CURL_EXE=ON"
 ) else (
     rem skip building the curl binary under CI to save time, if not
