@@ -9,6 +9,11 @@ on:
 jobs:
   build-ubuntu:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        BUILD_TYPE: [debug, release]
+    env:
+      CURL_VER: 8.0.1
 
     steps:
       - uses: actions/checkout@v3
@@ -26,15 +31,15 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Build libcurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" curl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: bash
 
       - name: Build trurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" trurl
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" trurl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: bash
 
       - name: Test trurl
-        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" test
+        run: bash "$GITHUB_WORKSPACE/winbuild/build.sh" test "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: bash
 
   build-windows:
@@ -44,6 +49,9 @@ jobs:
         arch:
           - amd64
           - amd64_x86
+        BUILD_TYPE: [debug, release]
+    env:
+      CURL_VER: 8.0.1
     steps:
       - uses: actions/checkout@v3
       - uses: ilammy/msvc-dev-cmd@v1
@@ -62,13 +70,13 @@ jobs:
           pip3 install -r requirements.txt
 
       - name: Build libcurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" curl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: cmd
 
       - name: Build trurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" trurl
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" trurl "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: cmd
 
       - name: Test trurl
-        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" test
+        run: call "%GITHUB_WORKSPACE%\winbuild\build.bat" test "" ${{matrix.BUILD_TYPE}} ${env:CURL_VER}
         shell: cmd
