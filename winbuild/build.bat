@@ -104,15 +104,15 @@ rem ${{matrix.BUILD_ARCH}}
 rem ${{matrix.BUILD_TYPE}}
 
 rem variables that go in the env section
-rem set "CURL_VER=8.0.1"
-rem set "CURL_URL=https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.1.zip"
+rem set "CURL_VER=8.1.0"
+rem set "CURL_URL=https://github.com/curl/curl/releases/download/curl-8_1_0/curl-8.1.0.zip"
 
 rem 4th argument is the version of libcurl to build with in the format x.y.z
 rem default to the latest version as of writing the batch file
 if not "%~4"=="" (
     set "CURL_VER=%~4"
 ) else (
-    set "CURL_VER=8.0.1"
+    set "CURL_VER=8.1.0"
 )
 
 set "CURL_TAG=curl-%CURL_VER:.=_%"
