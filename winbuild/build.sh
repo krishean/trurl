@@ -328,6 +328,7 @@ check_trurl(){
 }
 
 test_trurl(){
+    ret=0
     cd "$GITHUB_WORKSPACE/winbuild"
     echo "Testing trurl $preset..."
     #if [ -d "$install_dir/bin" ];then
@@ -337,11 +338,15 @@ test_trurl(){
         #perl "$GITHUB_WORKSPACE/test.pl"
         #$PYTHON3 "$GITHUB_WORKSPACE/test.py"
         ctest -V
+        ret=$?
     else
         echo " note: The $preset directory does not exist."
     fi
     echo ""
+    return $ret
 }
+
+ret=0
 
 # check $1 for if curl, trurl, test, or clean were specified
 if [[ $1 == curl ]];then
@@ -356,6 +361,7 @@ elif [[ $1 == test ]];then
     check_trurl
     # we're ready to start testing things here
     test_trurl
+    ret=$?
 elif [[ $1 == clean ]];then
     # clean just removes the out directory
     if [ -d "$GITHUB_WORKSPACE/winbuild/out" ];then
@@ -384,4 +390,4 @@ fi
 #done
 
 echo "Done."
-exit
+exit $ret
