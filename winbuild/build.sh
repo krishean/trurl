@@ -103,13 +103,13 @@ fi
 #fi
 
 # variables that go in the env section
-#CURL_VER="8.0.1"
-#CURL_URL="https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.1.tar.gz"
+#CURL_VER="8.1.0"
+#CURL_URL="https://github.com/curl/curl/releases/download/curl-8_1_0/curl-8.1.0.tar.gz"
 
 if [ -n "$4" ];then
     CURL_VER="$4"
 else
-    CURL_VER="8.0.1"
+    CURL_VER="8.1.0"
 fi
 
 # access with ex:
