@@ -335,8 +335,8 @@ test_trurl(){
     #    cd "$install_dir/bin"
     if [ -d "$build_dir" ];then
         cd "$build_dir"
-        # add a link to the testfiles directory so tests work again
-        ln -s "$GITHUB_WORKSPACE/testfiles"
+        # create a symlink to the testfiles directory so tests work again
+        if [ ! -L "testfiles" ];then ln -s "$GITHUB_WORKSPACE/testfiles";fi
         #perl "$GITHUB_WORKSPACE/test.pl"
         #$PYTHON3 "$GITHUB_WORKSPACE/test.py"
         ctest -V
