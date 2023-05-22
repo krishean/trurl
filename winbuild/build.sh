@@ -14,7 +14,7 @@ else
     arch="$(uname -m)"
     case $arch in
         
-        armv7l)
+        armv7l | armv6l)
             build_arch="arm"
             ;;
         
@@ -36,32 +36,23 @@ else
     esac
 fi
 
-if [[ $GITHUB_ACTIONS != true ]];then
-    BUILD_CURL_EXE="ON"
-else
-    # skip building the curl binary under CI to save time, if not
-    # building under CI you get a free copy of curl for your trouble
+if [ -n "$GITHUB_ACTIONS" ] && [[ $GITHUB_ACTIONS == true ]];then
+    # CI will skip building the curl binary to save time
     BUILD_CURL_EXE="OFF"
-fi
-
-if [ -n "$3" ];then
-    if [[ $3 == debug ]];then
-        #DEBUG="yes"
-        DEBUG="ON"
-    else
-        #DEBUG="no"
-        DEBUG="OFF"
-    fi
 else
-    #DEBUG="no"
-    DEBUG="OFF"
+    # otherwise you get a free copy of curl for your trouble
+    BUILD_CURL_EXE="ON"
 fi
 
-if [ "$DEBUG" == "ON" ];then
+if [ -n "$3" ] && [[ $3 == debug ]];then
+    #DEBUG="yes"
+    DEBUG="ON"
     build_type="Debug"
     preset="$build_arch-debug"
     curl_lib="libcurl-d.a"
 else
+    #DEBUG="no"
+    DEBUG="OFF"
     build_type="Release"
     preset="$build_arch-release"
     curl_lib="libcurl.a"
