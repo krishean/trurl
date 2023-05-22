@@ -455,6 +455,8 @@ rem if exist "%install_dir%\bin" (
 rem     cd "%install_dir%\bin"
 if exist "%build_dir%" (
     cd "%build_dir%"
+    rem create a symlink to the testfiles directory so tests work again
+    if not exist "testfiles" mklink /d "testfiles" "%GITHUB_WORKSPACE%\testfiles"
     rem perl "%GITHUB_WORKSPACE%\test.pl"
     rem python3 "%GITHUB_WORKSPACE%\test.py"
     rem note: when visual studio is used as the generator, you need to specify build_type for ctest
